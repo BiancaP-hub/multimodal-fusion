@@ -26,7 +26,7 @@ def save_dataset_to_tfrecord(dataset, filename, modalities):
     with tf.io.TFRecordWriter(filename) as writer:
         for data in dataset:
             modality_data = {modality: tf.io.serialize_tensor(data[i]).numpy() for i, modality in enumerate(modalities)}
-            patient_id = data[-1].numpy().decode('utf-8')  # Assuming the last element is the patient ID
+            patient_id = data[-1].numpy().decode('utf-8')  # Last element is the patient ID
             example = serialize_example(modality_data, patient_id)
             writer.write(example)
 
