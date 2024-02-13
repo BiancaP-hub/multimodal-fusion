@@ -1,8 +1,10 @@
 import numpy as np
 import matlab.engine
 import scipy.io as sio
+from loss_functions import custom_multi_ssim_loss
+from skimage.filters import sobel
 
-def mutual_information_between_two_images(image1, image2, bins=256):
+def mi_score(image1, image2, bins=256):
     """
     Calculate the mutual information between two images.
 
@@ -53,7 +55,8 @@ def save_images_to_mat(ima, imb, imf):
     sio.savemat('imb.mat', {'imb': imb})
     sio.savemat('imf.mat', {'imf': imf})
 
-def calculate_fmi(batch1, batch2, output_batch):
+def fmi_score(batch1, batch2, output_batch):
+    # TODO : adapt for more than 3 images
     fmi_batch = []
     # Start MATLAB engine
     eng = matlab.engine.start_matlab()
@@ -74,6 +77,12 @@ def calculate_fmi(batch1, batch2, output_batch):
     eng.quit()
 
     return np.mean(fmi_batch)
+
+def ssim_score(true : list, pred, max_val=1.0, alpha=1.0, beta=1.0, gamma=1.0):
+    ssim_loss = custom_multi_ssim_loss(true, pred, max_val, alpha, beta, gamma)
+    ssim_score = 1.0 - ssim_loss 
+    return ssim_score
+
 
 
 

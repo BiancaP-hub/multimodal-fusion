@@ -5,7 +5,7 @@ def ssim_loss(true, pred, max_val=1.0):
     """Computes SSIM loss."""
     return 1.0 - tf.reduce_mean(tf.image.ssim(true, pred, max_val))
 
-def custom_multi_ssim_loss(comparison_images, reference, max_val=1.0, alpha=1.0, beta=1.0, gamma=1.0, weights=None):
+def custom_multi_ssim_loss(comparison_images : list, reference, max_val=1.0, alpha=1.0, beta=1.0, gamma=1.0, weights=None):
     """
     Computes a custom SSIM loss for comparing multiple images with a single reference image.
     
