@@ -14,30 +14,11 @@ def calculate_histogram_statistics(image_np):
     
     return mean, std_dev, skewness, kurt
 
-def display_images_statistics_and_histograms(image1, image2, output, patient_id):
+def display_images_and_histograms(image1, image2, output, patient_id):
     # Assuming images are normalized in the range [0, 1]; scale to [0, 255]
     image1_np = (image1.numpy().squeeze() * 255).astype(int)
     image2_np = (image2.numpy().squeeze() * 255).astype(int)
     output_np = (output.numpy().squeeze() * 255).astype(int)
-    
-    # Calculate statistics for each image
-    stats_image1 = calculate_histogram_statistics(image1_np)
-    stats_image2 = calculate_histogram_statistics(image2_np)
-    stats_output = calculate_histogram_statistics(output_np)
-    
-    # Display statistics
-    print(f"Statistics for Patient {patient_id}:")
-    print(f"T2W - Mean: {stats_image1[0]:.2f}, Std Dev: {stats_image1[1]:.2f}, Skewness: {stats_image1[2]:.2f}, Kurtosis: {stats_image1[3]:.2f}")
-    print(f"T1W - Mean: {stats_image2[0]:.2f}, Std Dev: {stats_image2[1]:.2f}, Skewness: {stats_image2[2]:.2f}, Kurtosis: {stats_image2[3]:.2f}")
-    print(f"Output - Mean: {stats_output[0]:.2f}, Std Dev: {stats_output[1]:.2f}, Skewness: {stats_output[2]:.2f}, Kurtosis: {stats_output[3]:.2f}")
-
-    # Analyze edge concentration
-    edge_proportion1, middle_proportion1 = analyze_edge_concentration(image1_np)
-    edge_proportion2, middle_proportion2 = analyze_edge_concentration(image2_np)
-    edge_proportion_output, middle_proportion_output = analyze_edge_concentration(output_np)
-
-    print(f"Edge Proportion - T2W: {edge_proportion1:.2f}, T1W: {edge_proportion2:.2f}, Output: {edge_proportion_output:.2f}")
-    print(f"Middle Proportion - T2W: {middle_proportion1:.2f}, T1W: {middle_proportion2:.2f}, Output: {middle_proportion_output:.2f}")
 
     # Set up the subplot for images and histograms
     fig, axs = plt.subplots(2, 3, figsize=(18, 8))
@@ -67,6 +48,26 @@ def display_images_statistics_and_histograms(image1, image2, output, patient_id)
     
     plt.tight_layout()
     plt.show()
+
+def calculate_histogram_statistics(image1_np, image2_np, output_np, patient_id):
+    # Calculate statistics for each image
+    stats_image1 = calculate_histogram_statistics(image1_np)
+    stats_image2 = calculate_histogram_statistics(image2_np)
+    stats_output = calculate_histogram_statistics(output_np)
+    
+    # Display statistics
+    print(f"Statistics for Patient {patient_id}:")
+    print(f"T2W - Mean: {stats_image1[0]:.2f}, Std Dev: {stats_image1[1]:.2f}, Skewness: {stats_image1[2]:.2f}, Kurtosis: {stats_image1[3]:.2f}")
+    print(f"T1W - Mean: {stats_image2[0]:.2f}, Std Dev: {stats_image2[1]:.2f}, Skewness: {stats_image2[2]:.2f}, Kurtosis: {stats_image2[3]:.2f}")
+    print(f"Output - Mean: {stats_output[0]:.2f}, Std Dev: {stats_output[1]:.2f}, Skewness: {stats_output[2]:.2f}, Kurtosis: {stats_output[3]:.2f}")
+
+    # Analyze edge concentration
+    edge_proportion1, middle_proportion1 = analyze_edge_concentration(image1_np)
+    edge_proportion2, middle_proportion2 = analyze_edge_concentration(image2_np)
+    edge_proportion_output, middle_proportion_output = analyze_edge_concentration(output_np)
+
+    print(f"Edge Proportion - T2W: {edge_proportion1:.2f}, T1W: {edge_proportion2:.2f}, Output: {edge_proportion_output:.2f}")
+    print(f"Middle Proportion - T2W: {middle_proportion1:.2f}, T1W: {middle_proportion2:.2f}, Output: {middle_proportion_output:.2f}")
 
 def analyze_edge_concentration(image_np):
     # Calculate the histogram for the image
