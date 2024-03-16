@@ -29,4 +29,4 @@ def register_modalities(modality1, modality2, base_path='../../data-multi-subjec
                     print(f'Registered {modality2} to {modality1} image saved for {subject_folder}')
 
 # Usage
-# register_modalities('T1w', 'T2w')
+register_modalities('T2w', 'T1w')

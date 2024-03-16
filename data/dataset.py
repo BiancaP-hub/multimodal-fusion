@@ -3,13 +3,13 @@ import numpy as np
 import os
 import cv2
 from data.image_processing import normalize_image
-from util.image_utils import load_dataset_from_tfrecord, save_dataset_to_tfrecord
+from util.dataset_utils import load_dataset_from_tfrecord, save_dataset_to_tfrecord
 
 import argparse
 
 # Create a parser object and add arguments for modalities (list of strings, by default ['t2w', 't1w'])
 parser = argparse.ArgumentParser(description='Create a dataset for image fusion')
-parser.add_argument('--modalities', nargs='+', default=['t2w', 't1w'], help='List of modalities to use for training')
+parser.add_argument('--modalities', nargs='+', default=['T2w', 'T1w'], help='List of modalities to use for training')
 args = parser.parse_args()
 
 
@@ -60,6 +60,7 @@ def create_fusion_dataset(base_dir, modalities):
         print(f"Combined images shape for modality {modality}: {combined_data[modality].shape}")
     all_patient_ids = np.array(all_patient_ids)
     print(f"Total number of patient IDs: {len(all_patient_ids)}")
+    print(f"Total number of unique patient IDs: {len(np.unique(all_patient_ids))}")
 
     dataset_elements = tuple(combined_data[modality] for modality in modalities) + (all_patient_ids,)
     dataset = tf.data.Dataset.from_tensor_slices(dataset_elements)
@@ -97,6 +98,22 @@ def get_datasets(modalities, batch_size, train_ratio=0.8, val_ratio=0.1):
     return train_dataset, val_dataset, test_dataset
 
 if __name__ == '__main__':
-    dataset = create_fusion_dataset('paired_images', args.modalities)
+    # Get the absolute path of the current script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Define the path to the 'slices' folder
+    slices_folder = os.path.join(current_dir, 'slices')
+
+    # Define the path to the datasets folder
+    datasets_folder = os.path.join(current_dir, '..', 'datasets')
+
+    # Create the datasets folder if it doesn't exist
+    if not os.path.exists(datasets_folder):
+        os.makedirs(datasets_folder)
+
+    dataset = create_fusion_dataset(slices_folder, args.modalities)
+    
     # Save the dataset to a TFRecord file
-    save_dataset_to_tfrecord(dataset, os.path.join('datasets', '_'.join(args.modalities) + '_dataset.tfrecord'), args.modalities)
+    tfrecord_filename = '_'.join(args.modalities) + '_dataset.tfrecord'
+    tfrecord_path = os.path.join(datasets_folder, tfrecord_filename)
+    save_dataset_to_tfrecord(dataset, tfrecord_path, args.modalities)
