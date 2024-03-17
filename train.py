@@ -7,9 +7,9 @@ from data.dataset import get_datasets
 
 import argparse
 
-# Create a parser object and add arguments for modalities (list of strings, by default ['t2w', 't1w'])
+# Create a parser object and add arguments for modalities (list of strings, by default ['T2w', 'T1w'])
 parser = argparse.ArgumentParser(description='Train a model on a dataset')
-parser.add_argument('--modalities', nargs='+', default=['t2w', 't1w'], help='List of modalities to use for training')
+parser.add_argument('--modalities', nargs='+', default=['T2w', 'T1w'], help='List of modalities to use for training')
 # Batch size argument (default 32)
 parser.add_argument('--batch_size', type=int, default=8, help='Batch size for training')
 # Learning rate argument (default 0.0001)
