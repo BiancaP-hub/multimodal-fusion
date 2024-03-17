@@ -24,9 +24,11 @@ parser.add_argument('--alpha', type=float, default=1, help='Weight for the lumin
 parser.add_argument('--beta', type=float, default=1, help='Weight for the contrast component of the SSIM loss')
 # Gamma argument (default 1)
 parser.add_argument('--gamma', type=float, default=1, help='Weight for the structure component of the SSIM loss')
+# Use multi-scale features argument (default False)
+parser.add_argument('--use_multi_scale', action='store_true', help='Use multi-scale features in the model')
 args = parser.parse_args()
 
-def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamma, max_epochs, learning_rate):
+def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamma, max_epochs, learning_rate, use_multi_scale=False):
     # Training configuration
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
     patience = 5
@@ -89,7 +91,8 @@ def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamm
 
         print(f'Training finished in {time.time() - start_time} seconds')
 
-        model.save(f"saved_models/fusion_model_alpha{alpha}_beta{beta}_gamma{gamma}.h5")
+        multi_scale = 'multi_scale' if use_multi_scale else ''
+        model.save(f"saved_models/fusion_model_alpha{alpha}_beta{beta}_gamma{gamma}_{multi_scale}.h5")
 
 
 if __name__ == '__main__':
@@ -103,6 +106,6 @@ if __name__ == '__main__':
     image_shapes = [sample[modality].shape[1:] for modality in args.modalities]
 
     # Build the model with the dynamically created list of image shapes
-    model = build_model(image_shapes)
+    model = build_model(image_shapes, use_multi_scale=args.use_multi_scale)
 
     train_model(args.modalities, model, train_dataset, val_dataset, args.alpha, args.beta, args.gamma, args.max_epochs, args.learning_rate)
