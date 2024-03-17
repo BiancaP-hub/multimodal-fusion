@@ -78,22 +78,28 @@ def get_datasets(modalities, batch_size, train_ratio=0.8, val_ratio=0.1):
 
     loaded_dataset = load_dataset_from_tfrecord(os.path.join('datasets', '_'.join(modalities) + '_dataset.tfrecord'), modalities)
 
-    dataset_size = sum(1 for _ in loaded_dataset)
-    train_size = int(train_ratio * dataset_size)
-    val_size = int(val_ratio * dataset_size)
+    # Get unique patient IDs
+    patient_ids = np.unique([data['patient_id'].numpy().decode('utf-8') for data in loaded_dataset])
 
-    # Shuffle the dataset with a fixed buffer size and seed
-    full_dataset = loaded_dataset.shuffle(buffer_size=dataset_size, reshuffle_each_iteration=False)
+    # Split the patient IDs into training, validation, and test sets
+    num_patients = len(patient_ids)
+    num_train = int(num_patients * train_ratio)
+    num_val = int(num_patients * val_ratio)
 
-    # Split the dataset
-    train_dataset = full_dataset.take(train_size)
-    test_val_dataset = full_dataset.skip(train_size)
-    val_dataset = test_val_dataset.take(val_size)
-    test_dataset = test_val_dataset.skip(val_size)
+    train_patients = patient_ids[:num_train]
+    val_patients = patient_ids[num_train:num_train + num_val]
+    test_patients = patient_ids[num_train + num_val:]
 
-    train_dataset = train_dataset.batch(batch_size)
+    # Filter the dataset by patient ID
+    train_dataset = loaded_dataset.filter(lambda x: x['patient_id'].numpy().decode('utf-8') in train_patients)
+    val_dataset = loaded_dataset.filter(lambda x: x['patient_id'].numpy().decode('utf-8') in val_patients)
+    test_dataset = loaded_dataset.filter(lambda x: x['patient_id'].numpy().decode('utf-8') in test_patients)
+
+    # Shuffle and batch the datasets
+    train_dataset = train_dataset.shuffle(buffer_size=1024).batch(batch_size)
     val_dataset = val_dataset.batch(batch_size)
     test_dataset = test_dataset.batch(batch_size)
+
 
     return train_dataset, val_dataset, test_dataset
 
