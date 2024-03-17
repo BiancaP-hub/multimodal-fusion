@@ -83,6 +83,7 @@ def get_datasets(modalities, batch_size, train_ratio=0.8, val_ratio=0.1):
 
     # Split the patient IDs into training, validation, and test sets
     num_patients = len(patient_ids)
+    print(f"Total number of patients: {num_patients}")
     num_train = int(num_patients * train_ratio)
     num_val = int(num_patients * val_ratio)
 
@@ -91,9 +92,19 @@ def get_datasets(modalities, batch_size, train_ratio=0.8, val_ratio=0.1):
     test_patients = patient_ids[num_train + num_val:]
 
     # Filter the dataset by patient ID
-    train_dataset = loaded_dataset.filter(lambda x: x['patient_id'].numpy().decode('utf-8') in train_patients)
-    val_dataset = loaded_dataset.filter(lambda x: x['patient_id'].numpy().decode('utf-8') in val_patients)
-    test_dataset = loaded_dataset.filter(lambda x: x['patient_id'].numpy().decode('utf-8') in test_patients)
+    train_patients_tf = tf.constant(train_patients)
+    train_dataset = loaded_dataset.filter(lambda x: tf.reduce_any(tf.equal(x['patient_id'], train_patients_tf)))
+
+    val_patients_tf = tf.constant(val_patients)
+    val_dataset = loaded_dataset.filter(lambda x: tf.reduce_any(tf.equal(x['patient_id'], val_patients_tf)))
+
+    test_patients_tf = tf.constant(test_patients)
+    test_dataset = loaded_dataset.filter(lambda x: tf.reduce_any(tf.equal(x['patient_id'], test_patients_tf)))
+
+    # Print lengths of the datasets
+    print(f"Number of training samples: {len(list(train_dataset))}")
+    print(f"Number of validation samples: {len(list(val_dataset))}")
+    print(f"Number of test samples: {len(list(test_dataset))}")
 
     # Shuffle and batch the datasets
     train_dataset = train_dataset.shuffle(buffer_size=1024).batch(batch_size)
