@@ -108,4 +108,4 @@ if __name__ == '__main__':
     # Build the model with the dynamically created list of image shapes
     model = build_model(image_shapes, use_multi_scale=args.use_multi_scale)
 
-    train_model(args.modalities, model, train_dataset, val_dataset, args.alpha, args.beta, args.gamma, args.max_epochs, args.learning_rate)
+    train_model(args.modalities, model, train_dataset, val_dataset, args.alpha, args.beta, args.gamma, args.max_epochs, args.learning_rate, args.use_multi_scale)
