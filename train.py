@@ -9,6 +9,8 @@ import argparse
 
 # Create a parser object and add arguments for modalities (list of strings, by default ['T2w', 'T1w'])
 parser = argparse.ArgumentParser(description='Train a model on a dataset')
+# Use multi-scale features argument (default False)
+parser.add_argument('--use_multi_scale', action='store_true', help='Use multi-scale features in the model')
 parser.add_argument('--modalities', nargs='+', default=['T2w', 'T1w'], help='List of modalities to use for training')
 # Batch size argument (default 32)
 parser.add_argument('--batch_size', type=int, default=8, help='Batch size for training')
@@ -24,8 +26,6 @@ parser.add_argument('--alpha', type=float, default=1, help='Weight for the lumin
 parser.add_argument('--beta', type=float, default=1, help='Weight for the contrast component of the SSIM loss')
 # Gamma argument (default 1)
 parser.add_argument('--gamma', type=float, default=1, help='Weight for the structure component of the SSIM loss')
-# Use multi-scale features argument (default False)
-parser.add_argument('--use_multi_scale', action='store_true', help='Use multi-scale features in the model')
 args = parser.parse_args()
 
 def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamma, max_epochs, learning_rate, use_multi_scale=False):
@@ -96,6 +96,7 @@ def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamm
 
 
 if __name__ == '__main__':
+    print(args)
     # Load the training and validation datasets
     train_dataset, val_dataset, _ = get_datasets(args.modalities, args.batch_size)
 
