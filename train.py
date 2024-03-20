@@ -29,6 +29,9 @@ parser.add_argument('--gamma', type=float, default=1, help='Weight for the struc
 args = parser.parse_args()
 
 def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamma, max_epochs, learning_rate, use_multi_scale=False):
+    # Print alpha, beta, gamma, and multi-scale features
+    print(f'Alpha: {alpha}, Beta: {beta}, Gamma: {gamma}, Multi-scale: {use_multi_scale}')
+    
     # Training configuration
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
     patience = 5
