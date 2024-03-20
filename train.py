@@ -1,7 +1,7 @@
 import tensorflow as tf
 import time
 from models.fusion_model import build_model
-from models.loss_functions import multi_ssim_loss, custom_ssim_loss
+from models.loss_functions import multi_ssim_loss, custom_ssim_loss, custom_combined_loss, multi_combined_loss
 from util.image_utils import display_images_and_histograms
 from data.dataset import get_datasets
 
@@ -34,7 +34,7 @@ def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamm
     patience = 5
     display_step = 5  # Display images every N epochs
 
-    model.compile(optimizer=optimizer, loss=custom_ssim_loss(alpha, beta, gamma))
+    model.compile(optimizer=optimizer, loss=custom_combined_loss(alpha, beta))
 
     best_val_loss = float('inf')
     wait = 0
@@ -53,7 +53,7 @@ def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamm
                 image1, image2 = images[modalities[0]], images[modalities[1]]
                 with tf.GradientTape() as tape:
                     predictions = model([image1, image2], training=True)
-                    loss = multi_ssim_loss([image1, image2], predictions, alpha=alpha, beta=beta, gamma=gamma)
+                    loss = multi_combined_loss([image1, image2], predictions, alpha=alpha, beta=beta)
                 grads = tape.gradient(loss, model.trainable_weights)
                 optimizer.apply_gradients(zip(grads, model.trainable_weights))
                 train_loss += loss
@@ -63,7 +63,7 @@ def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamm
             for images in val_dataset:
                 image1, image2 = images[modalities[0]], images[modalities[1]]
                 predictions = model([image1, image2], training=False)
-                loss = multi_ssim_loss([image1, image2], predictions, alpha=alpha, beta=beta, gamma=gamma)
+                loss = multi_combined_loss([image1, image2], predictions, alpha=alpha, beta=beta)
                 val_loss += loss
                 num_batches_val += 1
 
