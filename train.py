@@ -91,8 +91,8 @@ def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamm
 
         print(f'Training finished in {time.time() - start_time} seconds')
 
-        multi_scale = 'multi_scale' if use_multi_scale else ''
-        model.save(f"saved_models/fusion_model_alpha{alpha}_beta{beta}_gamma{gamma}_{multi_scale}.h5")
+        multi_scale = '_multi_scale' if use_multi_scale else ''
+        model.save(f"saved_models/fusion_model_alpha{alpha}_beta{beta}_gamma{gamma}{multi_scale}.h5")
 
 
 if __name__ == '__main__':
