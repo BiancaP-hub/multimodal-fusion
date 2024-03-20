@@ -29,15 +29,12 @@ parser.add_argument('--gamma', type=float, default=1, help='Weight for the struc
 args = parser.parse_args()
 
 def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamma, max_epochs, learning_rate, use_multi_scale=False):
-    # Print alpha, beta, gamma, and multi-scale features
-    print(f'Alpha: {alpha}, Beta: {beta}, Gamma: {gamma}, Multi-scale: {use_multi_scale}')
-    
     # Training configuration
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
     patience = 5
     display_step = 5  # Display images every N epochs
 
-    model.compile(optimizer=optimizer, loss=custom_combined_loss(alpha, beta))
+    model.compile(optimizer=optimizer, loss=custom_ssim_loss(alpha, beta, gamma))
 
     best_val_loss = float('inf')
     wait = 0
@@ -56,7 +53,7 @@ def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamm
                 image1, image2 = images[modalities[0]], images[modalities[1]]
                 with tf.GradientTape() as tape:
                     predictions = model([image1, image2], training=True)
-                    loss = multi_combined_loss([image1, image2], predictions, alpha=alpha, beta=beta)
+                    loss = multi_ssim_loss([image1, image2], predictions, alpha=alpha, beta=beta, gamma=gamma)
                 grads = tape.gradient(loss, model.trainable_weights)
                 optimizer.apply_gradients(zip(grads, model.trainable_weights))
                 train_loss += loss
@@ -66,7 +63,7 @@ def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamm
             for images in val_dataset:
                 image1, image2 = images[modalities[0]], images[modalities[1]]
                 predictions = model([image1, image2], training=False)
-                loss = multi_combined_loss([image1, image2], predictions, alpha=alpha, beta=beta)
+                loss = multi_ssim_loss([image1, image2], predictions, alpha=alpha, beta=beta, gamma=gamma)
                 val_loss += loss
                 num_batches_val += 1
 
