@@ -102,5 +102,43 @@ def combined_loss(true, pred, alpha=0.4, beta=0.3, gamma=0.1, max_val=1.0):
     
     return alpha * ssim_l + beta * grad_l + (1 - total_weight) * pixel_l + edge_l
 
+def multi_combined_loss(true_images, pred_image, alpha=0.5, beta=0.5, max_val=1.0):
+    """
+    Combines multi SSIM and Pixel Losses into a single loss function for multiple images.
+    
+    Parameters:
+    - true_images: The list of ground truth images.
+    - pred_image: The predicted (fused) image.
+    - alpha: Weight for the SSIM loss component.
+    - beta: Weight for the Pixel loss component.
+    - max_val: The dynamic range of the pixel values (255 for 8-bit images, 1 for normalized images).
+    
+    Returns:
+    - The weighted sum of the specified loss components.
+    """
+    # Initialize losses
+    ssim_l = 0
+    pixel_l = 0
+
+    # Calculate losses for each true image and the single predicted image
+    for true in true_images:
+        ssim_l += ssim_loss(true, pred_image, max_val) # components weights are 1.0, 1.0, 1.0
+        pixel_l += pixel_loss(true, pred_image)
+
+    # Average the losses
+    ssim_l /= len(true_images)
+    pixel_l /= len(true_images)
+
+    # Ensure the weights sum to 1
+    total_weight = alpha + beta
+    if total_weight != 1.0:
+        raise ValueError("Weights for loss components must sum to 1.")
+
+    return alpha * ssim_l + beta * pixel_l
+
+def custom_combined_loss(alpha, beta):
+    def custom_loss(y_true, y_pred):
+        return multi_combined_loss(y_true, y_pred, alpha=alpha, beta=beta)
+    return custom_loss
 
 

@@ -1,7 +1,7 @@
 import tensorflow as tf
 import time
 from models.fusion_model import build_model
-from models.loss_functions import multi_ssim_loss, custom_ssim_loss
+from models.loss_functions import multi_ssim_loss, custom_ssim_loss, custom_combined_loss, multi_combined_loss
 from util.image_utils import display_images_and_histograms
 from data.dataset import get_datasets
 
