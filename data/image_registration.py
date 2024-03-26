@@ -28,5 +28,40 @@ def register_modalities(modality1, modality2, base_path='../../data-multi-subjec
                     ants.image_write(registered_img, registered_image_path)
                     print(f'Registered {modality2} to {modality1} image saved for {subject_folder}')
 
-# Usage
-register_modalities('T2w', 'T1w')
+def align_images(fixed_image_path, moving_image_path):
+    """
+    Aligns the moving image to the fixed image using ANTsPy.
+
+    Args:
+        fixed_image_path (str): Path to the fixed image (the reference image).
+        moving_image_path (str): Path to the moving image (the image to be aligned).
+
+    Returns:
+        np.ndarray: The aligned moving image data.
+    """
+    fixed_image = ants.image_read(fixed_image_path)
+    moving_image = ants.image_read(moving_image_path)
+    
+    # Perform registration (alignment)
+    mytx = ants.registration(fixed=fixed_image, moving=moving_image, type_of_transform='SyN')
+    
+    # Apply the transformation to align the moving image to the fixed image
+    aligned_moving_image = ants.apply_transforms(fixed=fixed_image, moving=moving_image, transformlist=mytx['fwdtransforms'])
+    
+    return aligned_moving_image
+
+if __name__ == '__main__':
+    moving_image_dir = 'results/reconstructed_images/ssim_pixel_multi_scale'
+    fixed_image_dir = 'results/input_images/T1w'
+    aligned_images_dir = 'results/reconstructed_images/ssim_pixel_multi_scale/T1w_aligned'
+    for image in os.listdir(moving_image_dir):
+        # if the image does not end with _seg.nii.gz and is not a directory
+        if not image.endswith('_seg.nii.gz') and not os.path.isdir(os.path.join(moving_image_dir, image)):
+            moving_image_path = os.path.join(moving_image_dir, image)
+            # Remove '_T1w' from the image name to get the fixed image name
+            fixed_image_name = image.replace('_T2w', '')      
+            fixed_image_path = os.path.join(fixed_image_dir, fixed_image_name)
+            aligned_image = align_images(fixed_image_path, moving_image_path)
+            aligned_image_path = os.path.join(aligned_images_dir, image)
+            ants.image_write(aligned_image, aligned_image_path)
+            print(f'Aligned image saved to {aligned_image_path}')

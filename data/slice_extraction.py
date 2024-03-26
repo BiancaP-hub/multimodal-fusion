@@ -2,7 +2,48 @@ import numpy as np
 import cv2
 import ants
 import os
-from PIL import Image
+
+def extract_all_slices(data_dir='../../data-multi-subject', save_dir='slices', modalities=['T2w', 'T1w'], fixed_modality='T2w'):
+    aligned_modality = [f for f in modalities if f != fixed_modality][0]
+    patients = [f for f in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, f)) and f.startswith('sub-')]
+
+    for patient_id in patients:
+        images = {}
+        aligned_image_path = os.path.join('registered_images', f'{patient_id}_{aligned_modality}_to_{fixed_modality}.nii.gz')
+        image_path = os.path.join(data_dir, patient_id, 'anat', f'{patient_id}_{fixed_modality}.nii.gz')
+
+        if os.path.exists(image_path):
+            images[fixed_modality] = ants.image_read(image_path, reorient='LSA')
+
+        if os.path.exists(aligned_image_path):
+            images[aligned_modality] = ants.image_read(aligned_image_path)
+
+        if len(images) == len(modalities):
+            patient_save_dir = os.path.join(save_dir, patient_id)
+            os.makedirs(patient_save_dir, exist_ok=True)
+
+            normalized_images = {}
+            for modality, img in images.items():
+                img_array = img.numpy()
+                normalized_images[modality] = ((img_array - np.min(img_array)) / (np.max(img_array) - np.min(img_array)) * 255).astype(np.uint8)
+                print(f"Loaded {normalized_images[modality].shape} for {patient_id}, {modality}")
+                num_slices = normalized_images[modality].shape[0]
+                print(f"Loaded {num_slices} slices for {patient_id}, {modality}")
+
+                for i in range(num_slices):
+                    slice_resized = cv2.resize(normalized_images[modality][i], (256, 256))
+                    slice_save_path = os.path.join(patient_save_dir, f'{modality}_slice_{i}.png')
+                    cv2.imwrite(slice_save_path, slice_resized)
+                    print(f"Saved resized slices for {patient_id}, {modality}, slice index: {i}")
+
+            
+if __name__ == '__main__':
+    extract_all_slices()
+
+
+##############################################################################################################
+    # FUNCTIONS FOR EXTRACTING ONLY SLICES THAT CONTAIN A CLEAR SPINAL CORD
+##############################################################################################################
 
 # Function to draw contours
 def draw_contours(original_image, contours):
@@ -73,40 +114,3 @@ def extract_slices(data_dir='../../data-multi-subject', save_dir='paired_images'
                         slice_save_path = os.path.join(patient_save_dir, f'{modality.lower()}_slice_{i}.png')
                         cv2.imwrite(slice_save_path, slice_resized)
                         print(f"Saved resized slices for {patient_id}, {modality}, slice index: {i}")
-
-def extract_all_slices(data_dir='../../data-multi-subject', save_dir='slices', modalities=['T2w', 'T1w'], fixed_modality='T2w'):
-    aligned_modality = [f for f in modalities if f != fixed_modality][0]
-    patients = [f for f in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, f)) and f.startswith('sub-')]
-
-    for patient_id in patients:
-        images = {}
-        aligned_image_path = os.path.join('registered_images', f'{patient_id}_{aligned_modality}_to_{fixed_modality}.nii.gz')
-        image_path = os.path.join(data_dir, patient_id, 'anat', f'{patient_id}_{fixed_modality}.nii.gz')
-
-        if os.path.exists(image_path):
-            images[fixed_modality] = ants.image_read(image_path, reorient='LSA')
-
-        if os.path.exists(aligned_image_path):
-            images[aligned_modality] = ants.image_read(aligned_image_path)
-
-        if len(images) == len(modalities):
-            patient_save_dir = os.path.join(save_dir, patient_id)
-            os.makedirs(patient_save_dir, exist_ok=True)
-
-            normalized_images = {}
-            for modality, img in images.items():
-                img_array = img.numpy()
-                normalized_images[modality] = ((img_array - np.min(img_array)) / (np.max(img_array) - np.min(img_array)) * 255).astype(np.uint8)
-                print(f"Loaded {normalized_images[modality].shape} for {patient_id}, {modality}")
-                num_slices = normalized_images[modality].shape[0]
-                print(f"Loaded {num_slices} slices for {patient_id}, {modality}")
-
-                for i in range(num_slices):
-                    slice_resized = cv2.resize(normalized_images[modality][i], (256, 256))
-                    slice_save_path = os.path.join(patient_save_dir, f'{modality}_slice_{i}.png')
-                    cv2.imwrite(slice_save_path, slice_resized)
-                    print(f"Saved resized slices for {patient_id}, {modality}, slice index: {i}")
-
-            
-if __name__ == '__main__':
-    extract_all_slices()

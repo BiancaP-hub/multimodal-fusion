@@ -25,7 +25,7 @@ def save_images_to_mat(ima, imb, imf, dir_path='tmp'):
     sio.savemat(os.path.join(dir_path, 'imb.mat'), {'imb': imb})
     sio.savemat(os.path.join(dir_path, 'imf.mat'), {'imf': imf})
 
-def fmi(images1, images2, output_images):
+def fmi(images1, images2, output_images, eng):
     """
     Calculate the FMI score between the input images and the output images.
 
@@ -38,8 +38,9 @@ def fmi(images1, images2, output_images):
     - fmi: FMI score between the input images and the output images.
     """
     fmi_scores = []
-    # Start MATLAB engine
-    eng = matlab.engine.start_matlab()
+    # # Start MATLAB engine
+    # eng = matlab.engine.start_matlab()
+    # eng.cd(os.path.dirname(os.path.realpath(__file__)))
 
     # Save ima, imb, and imf to .mat files
     for ima, imb, imf in zip(images1, images2, output_images):
@@ -53,10 +54,10 @@ def fmi(images1, images2, output_images):
         # Use fmi.m to calculate the FMI
         fmi_scores.append(eng.fmi(ima, imb, imf))
 
-    # Stop MATLAB engine
-    eng.quit()
+    # # Stop MATLAB engine
+    # eng.quit()
 
-    # Delete the tmp directory
-    os.rmdir('tmp')
+    # Delete the tmp directory and all its contents
+    os.system('rm -rf tmp')
 
     return np.mean(fmi_scores)

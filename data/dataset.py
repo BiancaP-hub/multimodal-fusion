@@ -20,7 +20,10 @@ def extract_slice_number(filename):
     return int(slice_number)
 
 def load_image_pairs(patient_path, modalities):
-    """Load and normalize image pairs from a given patient path with matching slice numbers for specified modalities."""
+    """
+    Load and normalize image pairs from a given patient path with matching slice numbers for specified modalities.
+    Returns a dictionary with keys for each modality and an additional key for slice numbers.
+    """
     image_map = {}  # Maps slice numbers to modality paths
 
     for image_name in sorted(os.listdir(patient_path)):
@@ -32,37 +35,56 @@ def load_image_pairs(patient_path, modalities):
                 image_map[slice_number][modality] = os.path.join(patient_path, image_name)
 
     modality_images = {modality: [] for modality in modalities}
-    for slice_number, paths in image_map.items():
+    slice_numbers = []  # List to store slice numbers
+    for slice_number, paths in sorted(image_map.items()):
         if all(modality in paths for modality in modalities):
+            slice_numbers.append(slice_number)  # Store the slice number
             for modality in modalities:
                 img = cv2.imread(paths[modality], cv2.IMREAD_GRAYSCALE)
-                img = img[..., np.newaxis]
-                modality_images[modality].append(normalize_image(img))
+                img = img[..., np.newaxis]  # Ensure the image has a channel dimension
+                img_normalized = normalize_image(img)
+                modality_images[modality].append(img_normalized)
 
-    return {modality: np.array(images) for modality, images in modality_images.items()}
+    # Convert lists of images to numpy arrays
+    modality_images_arrays = {modality: np.array(images) for modality, images in modality_images.items()}
+    modality_images_arrays['slice_numbers'] = np.array(slice_numbers)  # Add slice numbers to the dict
+
+    print(modality_images_arrays)
+    
+    return modality_images_arrays
 
 def create_fusion_dataset(base_dir, modalities):
     combined_data = {modality: [] for modality in modalities}
     all_patient_ids = []
+    all_slice_numbers = []  # Initialize a list to store all slice numbers
+
     for patient in os.listdir(base_dir):
         patient_path = os.path.join(base_dir, patient)
         modality_data = load_image_pairs(patient_path, modalities)
-        if all(len(data) > 0 for data in modality_data.values()):
+        # Check if the modality data contains images and slice numbers
+        if all(len(data) > 0 for data in modality_data.values()) and 'slice_numbers' in modality_data:
+            slice_numbers = modality_data.pop('slice_numbers')  # Extract and remove slice numbers from the data
+            num_slices = len(slice_numbers)
             for modality, images in modality_data.items():
                 combined_data[modality].append(images)
-            all_patient_ids.extend([patient] * len(next(iter(modality_data.values()))))
+            all_patient_ids.extend([patient] * num_slices)
+            all_slice_numbers.extend(slice_numbers)  # Append the slice numbers for this patient
         else:
             print(f"Skipping patient {patient} due to missing modality data")
 
     # Concatenate all arrays
     for modality in modalities:
         combined_data[modality] = np.concatenate(combined_data[modality], axis=0)
-        print(f"Combined images shape for modality {modality}: {combined_data[modality].shape}")
     all_patient_ids = np.array(all_patient_ids)
+    all_slice_numbers = np.array(all_slice_numbers)  # Convert slice numbers list to a NumPy array
+
+    print(f"Combined images shape for modality {modality}: {combined_data[modality].shape}")
     print(f"Total number of patient IDs: {len(all_patient_ids)}")
     print(f"Total number of unique patient IDs: {len(np.unique(all_patient_ids))}")
+    print(f"Total number of slices: {len(all_slice_numbers)}")
 
-    dataset_elements = tuple(combined_data[modality] for modality in modalities) + (all_patient_ids,)
+    # Include all slice numbers in the dataset elements
+    dataset_elements = tuple(combined_data[modality] for modality in modalities) + (all_patient_ids, all_slice_numbers)
     dataset = tf.data.Dataset.from_tensor_slices(dataset_elements)
 
     # Debug print for the final dataset
@@ -75,6 +97,7 @@ def get_datasets(modalities, batch_size, train_ratio=0.8, val_ratio=0.1):
     # Set a fixed seed for NumPy and TensorFlow random number generators
     np.random.seed(42)
     tf.random.set_seed(42)
+    print("Batch size:", batch_size)
 
     loaded_dataset = load_dataset_from_tfrecord(os.path.join('datasets', '_'.join(modalities) + '_dataset.tfrecord'), modalities)
 
@@ -131,6 +154,6 @@ if __name__ == '__main__':
     dataset = create_fusion_dataset(slices_folder, args.modalities)
     
     # Save the dataset to a TFRecord file
-    tfrecord_filename = '_'.join(args.modalities) + '_dataset.tfrecord'
+    tfrecord_filename = '_'.join(args.modalities) + '_dataset_with_slice_numbers.tfrecord'
     tfrecord_path = os.path.join(datasets_folder, tfrecord_filename)
     save_dataset_to_tfrecord(dataset, tfrecord_path, args.modalities)
