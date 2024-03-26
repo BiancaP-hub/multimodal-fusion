@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import skew, kurtosis
+import os 
+import cv2
 
 def calculate_histogram_statistics(image_np):
     # Flatten the image to turn it into a 1D array of pixel values
@@ -89,3 +91,46 @@ def analyze_edge_concentration(image_np):
     middle_proportion = middle_sum / total_sum
     
     return edge_proportion, middle_proportion
+
+def save_fused_image(modalities, fused_image, patient_id, output_dir='results'):
+    # Create a directory to save the results
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Convert the fused image to a numpy array if it's a tensor
+    if hasattr(fused_image, 'numpy'):
+        fused_image = fused_image.numpy()
+
+    # Squeeze the image to remove dimensions of size 1, particularly batch and channel dimensions
+    fused_image = np.squeeze(fused_image)
+
+    # Check if the image is in float format, assumes the image is normalized between 0 and 1
+    if fused_image.dtype == np.float32:
+        # Scale to 0-255 and convert to uint8
+        fused_image = np.clip(fused_image * 255, 0, 255).astype(np.uint8)
+
+    # Assuming patient_id is a numpy array with a single byte string element,
+    # extract and decode the first element to get the patient ID string
+    if hasattr(patient_id, 'numpy'):
+        patient_id = patient_id.numpy()
+    if patient_id.size > 0:
+        patient_id_str = patient_id[0].decode('utf-8')
+    else:
+        raise ValueError("patient_id array is empty")
+
+    # Initialize counter at 0 for the first image
+    counter = 0
+    filename_base = f'fused_image_{patient_id_str}_{modalities[0]}_{modalities[1]}'
+    output_path = os.path.join(output_dir, f'{filename_base}_{counter}.png')
+    
+    # Check if the file already exists and increment the counter until a new filename is found
+    while os.path.exists(output_path):
+        counter += 1
+        output_path = os.path.join(output_dir, f'{filename_base}_{counter}.png')
+
+    # Save the fused image
+    success = cv2.imwrite(output_path, fused_image)
+    
+    if success:
+        print(f"Saved fused image for patient {patient_id_str} at {output_path}")
+    else:
+        print(f"Failed to save fused image for patient {patient_id_str} at {output_path}")
