@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(description='Train a model on a dataset')
 parser.add_argument('--use_multi_scale', action='store_true', help='Use multi-scale features in the model')
 parser.add_argument('--modalities', nargs='+', default=['T2w', 'T1w'], help='List of modalities to use for training')
 # Batch size argument (default 32)
-parser.add_argument('--batch_size', type=int, default=8, help='Batch size for training')
+parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training')
 # Learning rate argument (default 0.0001)
 parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate for training')
 # Optimizer argument (default 'adam')
@@ -53,7 +53,7 @@ def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamm
                 image1, image2 = images[modalities[0]], images[modalities[1]]
                 with tf.GradientTape() as tape:
                     predictions = model([image1, image2], training=True)
-                    loss = multi_ssim_loss([image1, image2], predictions, alpha=alpha, beta=beta, gamma=gamma)
+                    loss = multi_ssim_loss([image1], predictions, alpha=alpha, beta=beta, gamma=gamma)
                 grads = tape.gradient(loss, model.trainable_weights)
                 optimizer.apply_gradients(zip(grads, model.trainable_weights))
                 train_loss += loss
@@ -63,7 +63,7 @@ def train_model(modalities, model, train_dataset, val_dataset, alpha, beta, gamm
             for images in val_dataset:
                 image1, image2 = images[modalities[0]], images[modalities[1]]
                 predictions = model([image1, image2], training=False)
-                loss = multi_ssim_loss([image1, image2], predictions, alpha=alpha, beta=beta, gamma=gamma)
+                loss = multi_ssim_loss([image1], predictions, alpha=alpha, beta=beta, gamma=gamma)
                 val_loss += loss
                 num_batches_val += 1
 

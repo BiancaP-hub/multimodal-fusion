@@ -38,16 +38,32 @@ def save_dataset_to_tfrecord(dataset, filename, modalities):
             example = serialize_example(modality_data, patient_id, slice_number)
             writer.write(example)
 
+# def parse_tfrecord_fn(example, modalities):
+#     """
+#     Parses a single tf.train.Example into tensors for each modality and patient ID.
+#     """
+#     feature_description = {modality: tf.io.FixedLenFeature([], tf.string) for modality in modalities}
+#     feature_description['patient_id'] = tf.io.FixedLenFeature([], tf.string)
+#     example = tf.io.parse_single_example(example, feature_description)
+    
+#     parsed_data = {modality: tf.io.parse_tensor(example[modality], out_type=tf.float32) for modality in modalities}
+#     parsed_data['patient_id'] = example['patient_id']
+    
+#     return parsed_data
+
 def parse_tfrecord_fn(example, modalities):
     """
-    Parses a single tf.train.Example into tensors for each modality and patient ID.
+    Parses a single tf.train.Example into tensors for each modality, patient ID, and slice_number.
     """
     feature_description = {modality: tf.io.FixedLenFeature([], tf.string) for modality in modalities}
     feature_description['patient_id'] = tf.io.FixedLenFeature([], tf.string)
+    feature_description['slice_number'] = tf.io.FixedLenFeature([], tf.int64)  # Add slice_number to the features
+    
     example = tf.io.parse_single_example(example, feature_description)
     
     parsed_data = {modality: tf.io.parse_tensor(example[modality], out_type=tf.float32) for modality in modalities}
     parsed_data['patient_id'] = example['patient_id']
+    parsed_data['slice_number'] = example['slice_number']  # Extract the slice_number
     
     return parsed_data
 
@@ -55,24 +71,3 @@ def load_dataset_from_tfrecord(filename, modalities):
     raw_dataset = tf.data.TFRecordDataset(filename)
     parsed_dataset = raw_dataset.map(lambda x: parse_tfrecord_fn(x, modalities))
     return parsed_dataset
-
-# def parse_tfrecord_fn(example, modalities):
-#     """
-#     Parses a single tf.train.Example into tensors for each modality, patient ID, and slice_number.
-#     """
-#     feature_description = {modality: tf.io.FixedLenFeature([], tf.string) for modality in modalities}
-#     feature_description['patient_id'] = tf.io.FixedLenFeature([], tf.string)
-#     feature_description['slice_number'] = tf.io.FixedLenFeature([], tf.int64)  # Add slice_number to the features
-    
-#     example = tf.io.parse_single_example(example, feature_description)
-    
-#     parsed_data = {modality: tf.io.parse_tensor(example[modality], out_type=tf.float32) for modality in modalities}
-#     parsed_data['patient_id'] = example['patient_id']
-#     parsed_data['slice_number'] = example['slice_number']  # Extract the slice_number
-    
-#     return parsed_data
-
-# def load_dataset_from_tfrecord(filename, modalities):
-#     raw_dataset = tf.data.TFRecordDataset(filename)
-#     parsed_dataset = raw_dataset.map(lambda x: parse_tfrecord_fn(x, modalities))
-#     return parsed_dataset
