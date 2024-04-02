@@ -48,8 +48,6 @@ def load_image_pairs(patient_path, modalities):
     # Convert lists of images to numpy arrays
     modality_images_arrays = {modality: np.array(images) for modality, images in modality_images.items()}
     modality_images_arrays['slice_numbers'] = np.array(slice_numbers)  # Add slice numbers to the dict
-
-    print(modality_images_arrays)
     
     return modality_images_arrays
 
