@@ -154,6 +154,6 @@ if __name__ == '__main__':
     dataset = create_fusion_dataset(slices_folder, args.modalities)
     
     # Save the dataset to a TFRecord file
-    tfrecord_filename = '_'.join(args.modalities) + '_dataset_with_slice_numbers.tfrecord'
+    tfrecord_filename = '_'.join(args.modalities) + '_dataset.tfrecord'
     tfrecord_path = os.path.join(datasets_folder, tfrecord_filename)
     save_dataset_to_tfrecord(dataset, tfrecord_path, args.modalities)
