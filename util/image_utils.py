@@ -92,7 +92,7 @@ def analyze_edge_concentration(image_np):
     
     return edge_proportion, middle_proportion
 
-def save_fused_image(modalities, fused_image, patient_id, output_dir='results'):
+def save_fused_image(modalities, fused_image, patient_id, slice_number, output_dir='results'):
     # Create a directory to save the results
     os.makedirs(output_dir, exist_ok=True)
     
@@ -117,15 +117,9 @@ def save_fused_image(modalities, fused_image, patient_id, output_dir='results'):
     else:
         raise ValueError("patient_id array is empty")
 
-    # Initialize counter at 0 for the first image
-    counter = 0
+    # Use slice_number for the filename
     filename_base = f'fused_image_{patient_id_str}_{modalities[0]}_{modalities[1]}'
-    output_path = os.path.join(output_dir, f'{filename_base}_{counter}.png')
-    
-    # Check if the file already exists and increment the counter until a new filename is found
-    while os.path.exists(output_path):
-        counter += 1
-        output_path = os.path.join(output_dir, f'{filename_base}_{counter}.png')
+    output_path = os.path.join(output_dir, f'{filename_base}_{slice_number}.png')
 
     # Save the fused image
     success = cv2.imwrite(output_path, fused_image)
